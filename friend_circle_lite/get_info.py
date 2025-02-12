@@ -11,7 +11,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50'
 }
 
-timeout = (10, 15) # 连接超时和读取超时，防止requests接受时间过长
+timeout = (15, 20) # 连接超时和读取超时，防止requests接受时间过长
 
 def format_published_time(time_str):
     """
@@ -254,7 +254,7 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
         friends_data = response.json()
     except Exception as e:
         logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
-        return None
+        return None, None
 
     total_friends = len(friends_data['friends'])
     active_friends = 0
