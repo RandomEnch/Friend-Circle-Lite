@@ -22,18 +22,19 @@ if config["spider_settings"]["enable"]:
     specific_RSS = config['specific_RSS']
     logging.info("正在从 {json_url} 中获取，每个博客获取 {article_count} 篇文章".format(json_url=json_url, article_count=article_count))
     result, lost_friends = fetch_and_process_data(json_url=json_url, specific_RSS=specific_RSS, count=article_count)
-    if config["spider_settings"]["merge_result"]["enable"]:
-        marge_json_url = config['spider_settings']["merge_result"]['merge_json_url']
-        logging.info("合并数据功能开启，从 {marge_json_url} 中获取境外数据并合并".format(marge_json_url=marge_json_url + "/all.json"))
-        result = marge_data_from_json_url(result, marge_json_url + "/all.json")
-        lost_friends = marge_errors_from_json_url(lost_friends, marge_json_url + "/errors.json")
-    logging.info("数据获取完毕，目前共有 {count} 位好友的动态，正在处理数据".format(count=len(result.get("article_data", []))))
-    result = deal_with_large_data(result)
+    if result:
+        if config["spider_settings"]["merge_result"]["enable"]:
+            marge_json_url = config['spider_settings']["merge_result"]['merge_json_url']
+            logging.info("合并数据功能开启，从 {marge_json_url} 中获取境外数据并合并".format(marge_json_url=marge_json_url + "/all.json"))
+            result = marge_data_from_json_url(result, marge_json_url + "/all.json")
+            lost_friends = marge_errors_from_json_url(lost_friends, marge_json_url + "/errors.json")
+        logging.info("数据获取完毕，目前共有 {count} 位好友的动态，正在处理数据".format(count=len(result.get("article_data", []))))
+        result = deal_with_large_data(result)
 
-    with open("all.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-    with open("errors.json", "w", encoding="utf-8") as f:
-        json.dump(lost_friends, f, ensure_ascii=False, indent=2)
+        with open("all.json", "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        with open("errors.json", "w", encoding="utf-8") as f:
+            json.dump(lost_friends, f, ensure_ascii=False, indent=2)
 
 if config["email_push"]["enable"] or config["rss_subscribe"]["enable"]:
     logging.info("推送功能已启用，正在准备推送，获取配置信息")
