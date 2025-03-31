@@ -86,7 +86,7 @@ def check_feed(blog_url, session):
     for feed_type, path in possible_feeds:
         feed_url = blog_url.rstrip('/') + path
         try:
-            response = session.get(feed_url, headers=headers, timeout=timeout)
+            response = session.get(feed_url, headers=headers, timeout=timeout, verify=False)
             if response.status_code == 200:
                 return [feed_type, feed_url]
         except requests.RequestException:
@@ -111,7 +111,7 @@ def parse_feed(url, session, count=5, blog_url=''):
     dict: 包含网站名称、作者、原链接和每篇文章详细内容的字典。
     """
     try:
-        response = session.get(url, headers=headers, timeout=timeout)
+        response = session.get(url, headers=headers, timeout=timeout, verify=False)
         response.encoding = response.apparent_encoding or 'utf-8'
         feed = feedparser.parse(response.text)
         
@@ -250,7 +250,7 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
     session = requests.Session()
     
     try:
-        response = session.get(json_url, headers=headers, timeout=timeout)
+        response = session.get(json_url, headers=headers, timeout=timeout, verify=False)
         friends_data = response.json()
     except Exception as e:
         logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
