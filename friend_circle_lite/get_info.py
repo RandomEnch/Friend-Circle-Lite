@@ -11,7 +11,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50'
 }
 
-timeout = (15, 20) # 连接超时和读取超时，防止requests接受时间过长
+timeout = (30, 30) # 连接超时和读取超时，防止requests接受时间过长
 
 def format_published_time(time_str):
     """
@@ -366,7 +366,7 @@ def marge_errors_from_json_url(errors, marge_json_url):
     list: 合并后的错误信息列表
     """
     try:
-        response = requests.get(marge_json_url, timeout=10)  # 设置请求超时时间
+        response = requests.get(marge_json_url, timeout=30)  # 设置请求超时时间
         marge_errors = response.json()
     except Exception as e:
         logging.error(f"无法获取链接：{marge_json_url}，出现的问题为：{e}", exc_info=True)
