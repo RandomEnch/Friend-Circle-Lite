@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from dateutil import parser
 import requests
 import re
+import time
 import feedparser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -86,7 +87,7 @@ def check_feed(blog_url, session):
     for feed_type, path in possible_feeds:
         feed_url = blog_url.rstrip('/') + path
         try:
-            response = session.get(feed_url, headers=headers, timeout=timeout, verify=False)
+            response = session.get(feed_url, headers=headers, timeout=timeout)
             if response.status_code == 200:
                 return [feed_type, feed_url]
         except requests.RequestException:
@@ -111,7 +112,7 @@ def parse_feed(url, session, count=5, blog_url=''):
     dict: 包含网站名称、作者、原链接和每篇文章详细内容的字典。
     """
     try:
-        response = session.get(url, headers=headers, timeout=timeout, verify=False)
+        response = session.get(url, headers=headers, timeout=timeout)
         response.encoding = response.apparent_encoding or 'utf-8'
         feed = feedparser.parse(response.text)
         
@@ -235,7 +236,7 @@ def process_friend(friend, session, count, specific_RSS=[]):
             'articles': []
         }
 
-def fetch_and_process_data(json_url, specific_RSS=[], count=5):
+def fetch_and_process_data(json_url, specific_RSS=[], count=5, max_retries=3, retry_delay=1):
     """
     读取 JSON 数据并处理订阅信息，返回统计数据和文章信息。
 
@@ -248,13 +249,22 @@ def fetch_and_process_data(json_url, specific_RSS=[], count=5):
     dict: 包含统计数据和文章信息的字典。
     """
     session = requests.Session()
-    
-    try:
-        response = session.get(json_url, headers=headers, timeout=timeout, verify=False)
-        friends_data = response.json()
-    except Exception as e:
-        logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
-        return None, None
+    for attempt in range(max_retries):
+        try:
+            response = session.get(json_url, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            friends_data = response.json()
+            # return friends_data, None
+        except requests.exceptions.ConnectionError as e:
+            if attempt < max_retries - 1:  # 不是最后一次尝试
+                logging.warning(f"连接错误，尝试 {attempt + 1}/{max_retries} 重试... URL: {json_url}")
+                time.sleep(retry_delay)
+                continue
+            logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
+            return None, None
+        except Exception as e:
+            logging.error(f"无法获取链接：{json_url} ：{e}", exc_info=True)
+            return None, None
 
     total_friends = len(friends_data['friends'])
     active_friends = 0
